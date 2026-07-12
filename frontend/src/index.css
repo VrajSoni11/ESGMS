@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body { -webkit-font-smoothing: antialiased; }
+
+h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #D3E3D6; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.focus-ring:focus-visible {
+  outline: 2px solid #2F6844;
+  outline-offset: 2px;
+}
+
+@layer components {
+  .card {
+    @apply bg-panel rounded-2xl shadow-card border border-line p-5;
+  }
+  .btn-primary {
+    @apply bg-forest-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-forest-700 transition-colors focus-ring disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-white text-forest-700 border border-forest-300 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-forest-50 transition-colors focus-ring;
+  }
+  .btn-danger {
+    @apply bg-clay text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity focus-ring;
+  }
+  .input {
+    @apply w-full border border-line rounded-lg px-3 py-2 text-sm bg-white focus-ring focus:border-forest-500;
+  }
+  .label {
+    @apply text-xs font-semibold uppercase tracking-wide text-forest-700/70 mb-1 block;
+  }
+  .table-shell {
+    @apply w-full text-sm border-collapse;
+  }
+  .table-shell th {
+    @apply text-left text-xs uppercase tracking-wide text-forest-700/60 font-semibold py-2 px-3 border-b border-line;
+  }
+  .table-shell td {
+    @apply py-2.5 px-3 border-b border-line/70 align-middle;
+  }
+  .table-shell tr:hover td { @apply bg-forest-50/60; }
+  .pill {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+}

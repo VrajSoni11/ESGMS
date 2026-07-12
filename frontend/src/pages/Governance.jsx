@@ -157,17 +157,26 @@ function Acknowledgements({ user, isAdmin }) {
 function Audits({ isAdmin }) {
   const toast = useToast();
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', scope: '', auditDate: '', auditor: '', status: 'SCHEDULED' });
 
-  const load = () => api.get('/governance/audits').then((r) => setRows(r.data));
-  useEffect(load, []);
+  const load = () => {
+    setLoading(true);
+    api.get('/governance/audits')
+      .then((r) => setRows(r.data))
+      .catch((err) => toast.push(apiErrorMessage(err), 'error'))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
 
   const submit = async (e) => {
     e.preventDefault();
     try { await api.post('/governance/audits', form); toast.push('Audit scheduled'); setOpen(false); load(); }
     catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
+
+  if (loading) return <Loader />;
 
   return (
     <div className="card">

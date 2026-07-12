@@ -96,6 +96,23 @@ router.post('/challenges/:id/join', async (req, res) => {
   }
 });
 
+// Admin/Manager assigns a challenge to an employee
+router.post('/challenges/:id/assign', authorize('ADMIN', 'MANAGER'), async (req, res) => {
+  try {
+    const challengeId = Number(req.params.id);
+    const { employeeId } = req.body;
+    if (!employeeId) return res.status(400).json({ message: 'employeeId is required' });
+
+    const participation = await prisma.challengeParticipation.create({
+      data: { challengeId, employeeId: Number(employeeId), progress: 0 }
+    });
+    res.status(201).json(participation);
+  } catch (err) {
+    if (err.code === 'P2002') return res.status(409).json({ message: 'Employee has already joined/been assigned this challenge' });
+    res.status(400).json({ message: 'Failed to assign challenge', error: err.message });
+  }
+});
+
 // Employee updates progress / submits proof
 router.put('/challenge-participations/:id', upload.single('proof'), async (req, res) => {
   try {

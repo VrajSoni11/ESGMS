@@ -83,17 +83,26 @@ function Departments() {
 function Categories() {
   const toast = useToast();
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', type: 'CSR_ACTIVITY' });
 
-  const load = () => api.get('/masterdata/categories').then((r) => setRows(r.data));
-  useEffect(load, []);
+  const load = () => {
+    setLoading(true);
+    api.get('/masterdata/categories')
+      .then((r) => setRows(r.data))
+      .catch((err) => toast.push(apiErrorMessage(err), 'error'))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
 
   const submit = async (e) => {
     e.preventDefault();
     try { await api.post('/masterdata/categories', form); toast.push('Category created'); setOpen(false); load(); }
     catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
+
+  if (loading) return <Loader />;
 
   return (
     <div className="card">
@@ -132,17 +141,26 @@ function Categories() {
 function Products() {
   const toast = useToast();
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', sku: '' });
 
-  const load = () => api.get('/masterdata/products').then((r) => setRows(r.data));
-  useEffect(load, []);
+  const load = () => {
+    setLoading(true);
+    api.get('/masterdata/products')
+      .then((r) => setRows(r.data))
+      .catch((err) => toast.push(apiErrorMessage(err), 'error'))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
 
   const submit = async (e) => {
     e.preventDefault();
     try { await api.post('/masterdata/products', form); toast.push('Product created'); setOpen(false); load(); }
     catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
+
+  if (loading) return <Loader />;
 
   return (
     <div className="card">

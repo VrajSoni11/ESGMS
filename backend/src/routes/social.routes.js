@@ -28,7 +28,7 @@ router.post('/csr-activities', authorize('ADMIN'), async (req, res) => {
         categoryId: categoryId ? Number(categoryId) : null,
         description,
         activityDate: activityDate ? new Date(activityDate) : null,
-        pointsReward: pointsReward || 10,
+        pointsReward: pointsReward ? Number(pointsReward) : 10,
         status: status || 'ACTIVE',
         createdBy: req.user.id
       }
@@ -45,8 +45,9 @@ router.put('/csr-activities/:id', authorize('ADMIN'), async (req, res) => {
     const activity = await prisma.csrActivity.update({
       where: { id: Number(req.params.id) },
       data: {
-        title, description, pointsReward, status,
-        categoryId: categoryId ? Number(categoryId) : undefined,
+        title, description, status,
+        pointsReward: pointsReward ? Number(pointsReward) : undefined,
+        categoryId: categoryId === "" ? null : (categoryId ? Number(categoryId) : undefined),
         activityDate: activityDate ? new Date(activityDate) : undefined
       }
     });
@@ -87,6 +88,32 @@ router.post('/participations', upload.single('proof'), async (req, res) => {
       return res.status(409).json({ message: 'You have already joined/submitted this activity' });
     }
     res.status(400).json({ message: 'Failed to submit participation', error: err.message });
+  }
+});
+
+// Employee uploads proof file for an existing participation
+router.put('/participations/:id/proof', upload.single('proof'), async (req, res) => {
+  try {
+    const participationId = Number(req.params.id);
+    const participation = await prisma.employeeParticipation.findUnique({
+      where: { id: participationId }
+    });
+    if (!participation) return res.status(404).json({ message: 'Participation not found' });
+    if (participation.employeeId !== req.user.id) return res.status(403).json({ message: 'Not your participation record' });
+
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+    const proofUrl = `/uploads/${req.file.filename}`;
+
+    const updated = await prisma.employeeParticipation.update({
+      where: { id: participationId },
+      data: {
+        proofUrl,
+        approvalStatus: 'PENDING'
+      }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: 'Failed to upload proof', error: err.message });
   }
 });
 

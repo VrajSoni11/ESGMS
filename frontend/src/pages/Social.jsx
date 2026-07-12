@@ -22,7 +22,7 @@ export default function Social() {
       <PageHeader title="Social" sub="CSR activities, employee participation, training, and diversity metrics." />
       <Tabs tabs={tabs} active={tab} onChange={setTab} />
       {tab === 'activities' && <CsrActivities isAdmin={isAdmin} />}
-      {tab === 'participations' && <Participations isReviewer={isReviewer} />}
+      {tab === 'participations' && <Participations isReviewer={isReviewer} user={user} />}
       {tab === 'trainings' && <Trainings isReviewer={isReviewer} />}
       {tab === 'diversity' && <Diversity isAdmin={isAdmin} />}
     </div>
@@ -56,9 +56,7 @@ function CsrActivities({ isAdmin }) {
 
   const join = async (activityId) => {
     try {
-      const fd = new FormData();
-      fd.append('activityId', activityId);
-      await api.post('/social/participations', fd);
+      await api.post('/social/participations', { activityId });
       toast.push('Joined activity — submit proof from the Participations tab');
     } catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
@@ -118,7 +116,7 @@ function CsrActivities({ isAdmin }) {
   );
 }
 
-function Participations({ isReviewer }) {
+function Participations({ isReviewer, user }) {
   const toast = useToast();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,8 +136,11 @@ function Participations({ isReviewer }) {
     try {
       const fd = new FormData();
       fd.append('proof', file);
-      // Re-submit isn't a dedicated endpoint; participations are created with proof at join time in this build.
-      toast.push('Attach proof at the time of joining the activity.', 'error');
+      await api.put(`/social/participations/${id}/proof`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.push('Proof uploaded successfully');
+      load();
     } catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
 
@@ -156,7 +157,26 @@ function Participations({ isReviewer }) {
               <tr key={p.id}>
                 <td>{p.employee?.name}</td>
                 <td>{p.activity?.title}</td>
-                <td>{p.proofUrl ? <a href={p.proofUrl} target="_blank" rel="noreferrer" className="text-forest-700 underline text-xs">View</a> : <span className="text-ink/30 text-xs">None</span>}</td>
+                <td>
+                  {p.proofUrl ? (
+                    <a href={p.proofUrl} target="_blank" rel="noreferrer" className="text-forest-700 underline text-xs">View</a>
+                  ) : (
+                    user && user.id === p.employeeId && p.approvalStatus === 'PENDING' ? (
+                      <label className="text-xs text-forest-700 font-semibold cursor-pointer hover:underline">
+                        Upload Proof
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) uploadProof(p.id, e.target.files[0]);
+                          }}
+                        />
+                      </label>
+                    ) : (
+                      <span className="text-ink/30 text-xs">None</span>
+                    )
+                  )}
+                </td>
                 <td><StatusPill status={p.approvalStatus} /></td>
                 <td>{p.pointsEarned}</td>
                 {isReviewer && (

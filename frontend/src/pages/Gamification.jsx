@@ -37,6 +37,7 @@ function Challenges({ user, isAdmin, isReviewer }) {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', categoryId: '', description: '', xp: 50, difficulty: 'MEDIUM', evidenceRequired: true, deadline: '', status: 'ACTIVE' });
+  const [trackingChallenge, setTrackingChallenge] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -60,12 +61,33 @@ function Challenges({ user, isAdmin, isReviewer }) {
     catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
 
+  const submitProof = async (partId, file) => {
+    try {
+      const fd = new FormData();
+      fd.append('proof', file);
+      fd.append('progress', 100);
+      await api.put(`/gamification/challenge-participations/${partId}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.push('Proof submitted for review');
+      load();
+    } catch (err) { toast.push(apiErrorMessage(err), 'error'); }
+  };
+
+  const completeChallenge = async (partId) => {
+    try {
+      await api.put(`/gamification/challenge-participations/${partId}`, { progress: 100 });
+      toast.push('Challenge completed. Awaiting review.');
+      load();
+    } catch (err) { toast.push(apiErrorMessage(err), 'error'); }
+  };
+
   const setStatus = async (id, status) => {
     try { await api.put(`/gamification/challenges/${id}`, { status }); toast.push(`Challenge marked ${status}`); load(); }
     catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
 
-  const joinedIds = new Set(myParts.map((p) => p.challengeId));
+  const partMap = new Map(myParts.map((p) => [p.challengeId, p]));
 
   if (loading) return <Loader />;
 
@@ -79,25 +101,90 @@ function Challenges({ user, isAdmin, isReviewer }) {
         <table className="table-shell">
           <thead><tr><th>Title</th><th>Category</th><th>XP</th><th>Difficulty</th><th>Status</th><th>Participants</th><th></th></tr></thead>
           <tbody>
-            {rows.map((c) => (
-              <tr key={c.id}>
-                <td className="font-medium">{c.title}</td>
-                <td>{c.category?.name || '—'}</td>
-                <td className="font-semibold text-amber-700">{c.xp}</td>
-                <td>{c.difficulty}</td>
-                <td><StatusPill status={c.status} /></td>
-                <td>{c._count?.participations ?? 0}</td>
-                <td className="flex gap-2">
-                  {!isReviewer && c.status === 'ACTIVE' && !joinedIds.has(c.id) && (
-                    <button onClick={() => join(c.id)} className="text-forest-700 text-xs font-semibold hover:underline">Join</button>
-                  )}
-                  {!isReviewer && joinedIds.has(c.id) && <span className="text-xs text-forest-700/60">Joined</span>}
-                  {isAdmin && c.status === 'DRAFT' && <button onClick={() => setStatus(c.id, 'ACTIVE')} className="text-forest-700 text-xs font-semibold hover:underline">Activate</button>}
-                  {isAdmin && c.status === 'ACTIVE' && <button onClick={() => setStatus(c.id, 'UNDER_REVIEW')} className="text-amber-700 text-xs font-semibold hover:underline">Close for Review</button>}
-                  {isAdmin && c.status === 'UNDER_REVIEW' && <button onClick={() => setStatus(c.id, 'COMPLETED')} className="text-forest-700 text-xs font-semibold hover:underline">Complete</button>}
-                </td>
-              </tr>
-            ))}
+            {rows.map((c) => {
+              const myPart = partMap.get(c.id);
+              return (
+                <tr key={c.id}>
+                  <td className="font-medium">{c.title}</td>
+                  <td>{c.category?.name || '—'}</td>
+                  <td className="font-semibold text-amber-700">{c.xp}</td>
+                  <td>{c.difficulty}</td>
+                  <td><StatusPill status={c.status} /></td>
+                  <td>{c._count?.participations ?? 0}</td>
+                  <td className="flex flex-wrap gap-2.5 items-center">
+                    {isReviewer && (
+                      <button
+                        onClick={() => setTrackingChallenge(c)}
+                        className="text-forest-700 text-xs font-semibold hover:underline"
+                      >
+                        Participants
+                      </button>
+                    )}
+                    {!isReviewer && c.status === 'ACTIVE' && (
+                      <>
+                        {!myPart ? (
+                          <button onClick={() => join(c.id)} className="text-forest-700 text-xs font-semibold hover:underline">Join</button>
+                        ) : (
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className="text-xs text-forest-700/60 font-semibold">Joined</span>
+                            {myPart.approvalStatus === 'APPROVED' ? (
+                              <span className="text-xs text-forest-700 font-bold">✓ Approved</span>
+                            ) : myPart.approvalStatus === 'PENDING' ? (
+                              c.evidenceRequired ? (
+                                myPart.proofUrl ? (
+                                  <span className="text-xs text-amber-700 font-semibold">Pending Review</span>
+                                ) : (
+                                  <label className="text-xs text-forest-500 font-semibold cursor-pointer hover:underline">
+                                    Submit Proof
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        if (e.target.files?.[0]) submitProof(myPart.id, e.target.files[0]);
+                                      }}
+                                    />
+                                  </label>
+                                )
+                              ) : (
+                                myPart.progress === 100 ? (
+                                  <span className="text-xs text-amber-700 font-semibold">Pending Review</span>
+                                ) : (
+                                  <button
+                                    onClick={() => completeChallenge(myPart.id)}
+                                    className="text-xs text-forest-700 font-semibold hover:underline"
+                                  >
+                                    Mark Complete
+                                  </button>
+                                )
+                              )
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-clay font-semibold">Rejected</span>
+                                {c.evidenceRequired && (
+                                  <label className="text-xs text-forest-500 font-semibold cursor-pointer hover:underline">
+                                    Re-submit
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        if (e.target.files?.[0]) submitProof(myPart.id, e.target.files[0]);
+                                      }}
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {isAdmin && c.status === 'DRAFT' && <button onClick={() => setStatus(c.id, 'ACTIVE')} className="text-forest-700 text-xs font-semibold hover:underline">Activate</button>}
+                    {isAdmin && c.status === 'ACTIVE' && <button onClick={() => setStatus(c.id, 'UNDER_REVIEW')} className="text-amber-700 text-xs font-semibold hover:underline">Close for Review</button>}
+                    {isAdmin && c.status === 'UNDER_REVIEW' && <button onClick={() => setStatus(c.id, 'COMPLETED')} className="text-forest-700 text-xs font-semibold hover:underline">Complete</button>}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -130,7 +217,148 @@ function Challenges({ user, isAdmin, isReviewer }) {
           <button className="btn-primary mt-2">Save Challenge</button>
         </form>
       </Modal>
+
+      <ChallengeTrackingModal
+        open={!!trackingChallenge}
+        onClose={() => { setTrackingChallenge(null); load(); }}
+        challenge={trackingChallenge}
+      />
     </div>
+  );
+}
+
+function ChallengeTrackingModal({ open, onClose, challenge }) {
+  const toast = useToast();
+  const [parts, setParts] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [assigneeId, setAssigneeId] = useState('');
+
+  const loadParticipants = () => {
+    setLoading(true);
+    Promise.all([
+      api.get(`/gamification/challenge-participations?challengeId=${challenge.id}`),
+      api.get('/users')
+    ]).then(([pRes, uRes]) => {
+      setParts(pRes.data);
+      setUsers(uRes.data.filter(u => u.role === 'EMPLOYEE' || u.role === 'MANAGER'));
+    }).catch(err => {
+      toast.push(apiErrorMessage(err), 'error');
+    }).finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    if (open && challenge) {
+      loadParticipants();
+      setAssigneeId('');
+    }
+  }, [open, challenge]);
+
+  const review = async (partId, decision) => {
+    try {
+      await api.put(`/gamification/challenge-participations/${partId}/review`, { decision });
+      toast.push(`Submission ${decision.toLowerCase()}`);
+      loadParticipants();
+    } catch (err) {
+      toast.push(apiErrorMessage(err), 'error');
+    }
+  };
+
+  const assign = async (e) => {
+    e.preventDefault();
+    if (!assigneeId) return;
+    try {
+      await api.post(`/gamification/challenges/${challenge.id}/assign`, { employeeId: Number(assigneeId) });
+      toast.push('Challenge assigned successfully');
+      setAssigneeId('');
+      loadParticipants();
+    } catch (err) {
+      toast.push(apiErrorMessage(err), 'error');
+    }
+  };
+
+  if (!open) return null;
+
+  const partUserIds = new Set(parts.map(p => p.employeeId));
+  const assignableUsers = users.filter(u => !partUserIds.has(u.id));
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Tracking: ${challenge.title}`} wide>
+      {loading ? <Loader /> : (
+        <div className="flex flex-col gap-6">
+          <div className="border-b border-line pb-4">
+            <h4 className="font-semibold text-sm mb-2 text-ink/70">Assign to Employee</h4>
+            <form onSubmit={assign} className="flex gap-2">
+              <select
+                className="input py-1.5"
+                required
+                value={assigneeId}
+                onChange={e => setAssigneeId(e.target.value)}
+              >
+                <option value="">Select employee...</option>
+                {assignableUsers.map(u => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.department?.name || 'No Dept'})</option>
+                ))}
+              </select>
+              <button className="btn-primary py-1.5 px-4" disabled={!assigneeId}>Assign</button>
+            </form>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-3 text-ink/70">Participants ({parts.length})</h4>
+            {parts.length === 0 ? <EmptyState title="No participants yet" sub="Assign this challenge or let employees join." /> : (
+              <table className="table-shell text-xs">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Proof</th>
+                    <th>Status</th>
+                    <th>Review</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {parts.map(p => (
+                    <tr key={p.id}>
+                      <td className="font-semibold">{p.employee?.name}</td>
+                      <td>{p.employee?.department?.name || '—'}</td>
+                      <td>
+                        {p.proofUrl ? (
+                          <a href={p.proofUrl} target="_blank" rel="noreferrer" className="text-forest-700 underline font-semibold">View Proof</a>
+                        ) : (
+                          <span className="text-ink/30">None</span>
+                        )}
+                      </td>
+                      <td><StatusPill status={p.approvalStatus} /></td>
+                      <td className="flex gap-2">
+                        {p.approvalStatus === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => review(p.id, 'APPROVED')}
+                              className="text-forest-700 font-semibold hover:underline"
+                              disabled={challenge.evidenceRequired && !p.proofUrl}
+                              title={challenge.evidenceRequired && !p.proofUrl ? "Proof required" : ""}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => review(p.id, 'REJECTED')}
+                              className="text-clay font-semibold hover:underline"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 }
 
@@ -177,17 +405,26 @@ function Leaderboard() {
 function Badges({ isAdmin }) {
   const toast = useToast();
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', unlockRuleType: 'XP_THRESHOLD', unlockRuleValue: 50, icon: '🏅' });
 
-  const load = () => api.get('/gamification/badges').then((r) => setRows(r.data));
-  useEffect(load, []);
+  const load = () => {
+    setLoading(true);
+    api.get('/gamification/badges')
+      .then((r) => setRows(r.data))
+      .catch((err) => toast.push(apiErrorMessage(err), 'error'))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
 
   const submit = async (e) => {
     e.preventDefault();
     try { await api.post('/gamification/badges', form); toast.push('Badge created'); setOpen(false); load(); }
     catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
+
+  if (loading) return <Loader />;
 
   return (
     <div className="card">
@@ -235,11 +472,18 @@ function Badges({ isAdmin }) {
 function Rewards({ isAdmin, isEmployee }) {
   const toast = useToast();
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', pointsRequired: 50, stock: 10 });
 
-  const load = () => api.get('/gamification/rewards').then((r) => setRows(r.data));
-  useEffect(load, []);
+  const load = () => {
+    setLoading(true);
+    api.get('/gamification/rewards')
+      .then((r) => setRows(r.data))
+      .catch((err) => toast.push(apiErrorMessage(err), 'error'))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -251,6 +495,8 @@ function Rewards({ isAdmin, isEmployee }) {
     try { await api.post(`/gamification/rewards/${id}/redeem`); toast.push('Reward redeemed!'); load(); }
     catch (err) { toast.push(apiErrorMessage(err), 'error'); }
   };
+
+  if (loading) return <Loader />;
 
   return (
     <div className="card">

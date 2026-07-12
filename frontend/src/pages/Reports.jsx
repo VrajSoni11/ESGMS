@@ -44,9 +44,9 @@ export default function Reports() {
       <div className="card mb-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-semibold">Export Format</h3>
-          <div className="flex gap-1 bg-forest-50 rounded-lg p-1">
+          <div className="flex gap-1 bg-mint-400/10 rounded-lg p-1">
             {['csv', 'excel', 'pdf'].map((f) => (
-              <button key={f} onClick={() => setFormat(f)} className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase ${format === f ? 'bg-white shadow-sm text-forest-700' : 'text-ink/50'}`}>
+              <button key={f} onClick={() => setFormat(f)} className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase ${format === f ? 'bg-mint-400/15 border border-mint-400/25 text-mint-400' : 'text-ink/50'}`}>
                 {f}
               </button>
             ))}

@@ -31,25 +31,70 @@ router.get('/challenges/:id', async (req, res) => {
   res.json(challenge);
 });
 
+// Helper: safely turn a form value into a valid Date or null, never "Invalid Date"
+function parseDeadline(deadline) {
+  if (deadline === undefined || deadline === null || deadline === '') return null;
+  const d = new Date(deadline);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
+// Helper: safely coerce category id, tolerating "", null, undefined, or non-numeric junk
+function parseCategoryId(categoryId) {
+  if (categoryId === undefined || categoryId === null || categoryId === '') return null;
+  const n = Number(categoryId);
+  return Number.isNaN(n) ? null : n;
+}
+
 router.post('/challenges', authorize('ADMIN'), async (req, res) => {
   try {
     const { title, categoryId, description, xp, difficulty, evidenceRequired, deadline, status } = req.body;
+
+    // Bug fix: previously an empty/whitespace-only title, a bad xp value, or a
+    // malformed date could all reach Prisma and fail with an opaque 400 that
+    // the UI reported simply as "unable to create a challenge". Validate up
+    // front and return a specific, actionable message instead.
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
+
+    const parsedXp = xp === undefined || xp === null || xp === '' ? 50 : Number(xp);
+    if (Number.isNaN(parsedXp) || parsedXp < 0) {
+      return res.status(400).json({ message: 'XP must be a valid positive number' });
+    }
+
+    const allowedDifficulty = ['EASY', 'MEDIUM', 'HARD'];
+    const safeDifficulty = allowedDifficulty.includes(difficulty) ? difficulty : 'MEDIUM';
+
+    const allowedStatus = ['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'COMPLETED', 'ARCHIVED'];
+    const safeStatus = allowedStatus.includes(status) ? status : 'DRAFT';
+
+    // Guard against a categoryId pointing at a category that no longer exists
+    const parsedCategoryId = parseCategoryId(categoryId);
+    if (parsedCategoryId !== null) {
+      const categoryExists = await prisma.category.findUnique({ where: { id: parsedCategoryId } });
+      if (!categoryExists) {
+        return res.status(400).json({ message: 'Selected category no longer exists — pick another' });
+      }
+    }
+
     const challenge = await prisma.challenge.create({
       data: {
-        title,
-        categoryId: categoryId ? Number(categoryId) : null,
-        description,
-        xp: xp || 50,
-        difficulty: difficulty || 'MEDIUM',
-        evidenceRequired: evidenceRequired !== undefined ? evidenceRequired : true,
-        deadline: deadline ? new Date(deadline) : null,
-        status: status || 'DRAFT',
+        title: String(title).trim(),
+        categoryId: parsedCategoryId,
+        description: description || '',
+        xp: parsedXp,
+        difficulty: safeDifficulty,
+        evidenceRequired: evidenceRequired !== undefined ? Boolean(evidenceRequired) : true,
+        deadline: parseDeadline(deadline),
+        status: safeStatus,
         createdBy: req.user.id
       }
     });
     res.status(201).json(challenge);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to create challenge', error: err.message });
+    console.error('Challenge creation error:', err);
+    res.status(400).json({ message: err.message || 'Failed to create challenge', error: err.message });
   }
 });
 
@@ -57,17 +102,33 @@ router.post('/challenges', authorize('ADMIN'), async (req, res) => {
 router.put('/challenges/:id', authorize('ADMIN'), async (req, res) => {
   try {
     const { title, categoryId, description, xp, difficulty, evidenceRequired, deadline, status } = req.body;
+
+    if (title !== undefined && !String(title).trim()) {
+      return res.status(400).json({ message: 'Title cannot be empty' });
+    }
+
+    const data = {
+      description,
+      evidenceRequired: evidenceRequired !== undefined ? Boolean(evidenceRequired) : undefined,
+      status,
+      difficulty
+    };
+    if (title !== undefined) data.title = String(title).trim();
+    if (xp !== undefined && xp !== '') {
+      const parsedXp = Number(xp);
+      if (!Number.isNaN(parsedXp)) data.xp = parsedXp;
+    }
+    if (categoryId !== undefined) data.categoryId = parseCategoryId(categoryId);
+    if (deadline !== undefined) data.deadline = parseDeadline(deadline);
+
     const challenge = await prisma.challenge.update({
       where: { id: Number(req.params.id) },
-      data: {
-        title, description, xp, difficulty, evidenceRequired, status,
-        categoryId: categoryId ? Number(categoryId) : undefined,
-        deadline: deadline ? new Date(deadline) : undefined
-      }
+      data
     });
     res.json(challenge);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to update challenge', error: err.message });
+    console.error('Challenge update error:', err);
+    res.status(400).json({ message: err.message || 'Failed to update challenge', error: err.message });
   }
 });
 

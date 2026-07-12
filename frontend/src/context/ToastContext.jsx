@@ -19,8 +19,10 @@ export function ToastProvider({ children }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`px-4 py-3 rounded-lg shadow-card text-sm font-medium text-white min-w-[240px] ${
-              t.type === 'error' ? 'bg-clay' : 'bg-forest-500'
+            className={`px-4 py-3 rounded-xl backdrop-blur-xl border shadow-glass text-sm font-medium min-w-[240px] ${
+              t.type === 'error'
+                ? 'bg-clay/15 border-clay/30 text-clay'
+                : 'bg-mint-400/15 border-mint-400/25 text-mint-400'
             }`}
           >
             {t.message}

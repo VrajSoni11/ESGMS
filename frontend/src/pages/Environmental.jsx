@@ -5,7 +5,7 @@ import { useToast, apiErrorMessage } from '../context/ToastContext';
 import { PageHeader, Tabs, Loader, EmptyState, Modal, StatCard } from '../components/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-const COLORS = ['#2F6844', '#C98A3E', '#B75B45', '#7FA98A', '#204A31'];
+const COLORS = ['#B8F7E4', '#F0C177', '#E38A78', '#7FE0BE', '#3C8F73'];
 
 export default function Environmental() {
   const { user } = useAuth();
@@ -55,7 +55,7 @@ function EnvOverview() {
                 <Pie data={sourceData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
                   {sourceData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={{ background: '#25272C', border: '1px solid rgba(184,247,228,0.15)', borderRadius: 12, color: '#EAF6F2' }} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -65,11 +65,11 @@ function EnvOverview() {
           {deptData.length === 0 ? <EmptyState /> : (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={deptData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E4E0D6" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#2F6844" radius={[6, 6, 0, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(184,247,228,0.1)" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#9498A3' }} />
+                <YAxis tick={{ fontSize: 12, fill: '#9498A3' }} />
+                <Tooltip contentStyle={{ background: '#25272C', border: '1px solid rgba(184,247,228,0.15)', borderRadius: 12, color: '#EAF6F2' }} />
+                <Bar dataKey="value" fill="#B8F7E4" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

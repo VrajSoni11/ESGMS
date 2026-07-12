@@ -81,7 +81,7 @@ function CsrActivities({ isAdmin }) {
                 <td>{a.pointsReward}</td>
                 <td><StatusPill status={a.status} /></td>
                 <td>{a._count?.participations ?? 0}</td>
-                {!isAdmin && <td><button onClick={() => join(a.id)} className="text-forest-700 text-xs font-semibold hover:underline">Join</button></td>}
+                {!isAdmin && <td><button onClick={() => join(a.id)} className="text-mint-400 text-xs font-semibold hover:underline">Join</button></td>}
               </tr>
             ))}
           </tbody>
@@ -159,10 +159,10 @@ function Participations({ isReviewer, user }) {
                 <td>{p.activity?.title}</td>
                 <td>
                   {p.proofUrl ? (
-                    <a href={p.proofUrl} target="_blank" rel="noreferrer" className="text-forest-700 underline text-xs">View</a>
+                    <a href={p.proofUrl} target="_blank" rel="noreferrer" className="text-mint-400 underline text-xs">View</a>
                   ) : (
                     user && user.id === p.employeeId && p.approvalStatus === 'PENDING' ? (
-                      <label className="text-xs text-forest-700 font-semibold cursor-pointer hover:underline">
+                      <label className="text-xs text-mint-400 font-semibold cursor-pointer hover:underline">
                         Upload Proof
                         <input
                           type="file"
@@ -183,7 +183,7 @@ function Participations({ isReviewer, user }) {
                   <td className="flex gap-2 py-2">
                     {p.approvalStatus === 'PENDING' && (
                       <>
-                        <button onClick={() => review(p.id, 'APPROVED')} className="text-forest-700 text-xs font-semibold hover:underline">Approve</button>
+                        <button onClick={() => review(p.id, 'APPROVED')} className="text-mint-400 text-xs font-semibold hover:underline">Approve</button>
                         <button onClick={() => review(p.id, 'REJECTED')} className="text-clay text-xs font-semibold hover:underline">Reject</button>
                       </>
                     )}

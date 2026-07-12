@@ -82,7 +82,7 @@ function AdminDashboard() {
                     <td>{Number(d.environmentalScore).toFixed(1)}</td>
                     <td>{Number(d.socialScore).toFixed(1)}</td>
                     <td>{Number(d.governanceScore).toFixed(1)}</td>
-                    <td className="font-semibold text-forest-700">{Number(d.totalScore).toFixed(1)}</td>
+                    <td className="font-semibold text-mint-400">{Number(d.totalScore).toFixed(1)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -93,7 +93,7 @@ function AdminDashboard() {
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-semibold">Top Employees by XP</h3>
-            <Link to="/gamification" className="text-xs font-semibold text-forest-700 hover:underline">View leaderboard →</Link>
+            <Link to="/gamification" className="text-xs font-semibold text-mint-400 hover:underline">View leaderboard →</Link>
           </div>
           {data.topEmployees.length === 0 ? (
             <EmptyState title="No employee activity yet" />
@@ -102,13 +102,13 @@ function AdminDashboard() {
               {data.topEmployees.map((e, i) => (
                 <li key={e.id} className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-forest-50 text-forest-700 flex items-center justify-center text-xs font-bold">{i + 1}</span>
+                    <span className="w-6 h-6 rounded-full bg-mint-400/10 text-mint-400 flex items-center justify-center text-xs font-bold">{i + 1}</span>
                     <span>
                       <span className="font-medium">{e.name}</span>
                       <span className="text-ink/40 ml-2 text-xs">{e.department?.name || '—'}</span>
                     </span>
                   </span>
-                  <span className="font-semibold text-amber-700">{e.xp} XP</span>
+                  <span className="font-semibold text-amber-400">{e.xp} XP</span>
                 </li>
               ))}
             </ul>

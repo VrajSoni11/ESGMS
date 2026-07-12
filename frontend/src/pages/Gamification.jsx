@@ -52,8 +52,26 @@ function Challenges({ user, isAdmin, isReviewer }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    try { await api.post('/gamification/challenges', form); toast.push('Challenge created'); setOpen(false); load(); }
-    catch (err) { toast.push(apiErrorMessage(err), 'error'); }
+    // Bug fix: trim + validate before hitting the API so a whitespace-only
+    // title or a stray non-numeric XP value can't slip through and produce
+    // the old "unable to create a challenge" failure with no clear reason.
+    if (!form.title.trim()) {
+      toast.push('Title is required', 'error');
+      return;
+    }
+    const xpNum = Number(form.xp);
+    if (form.xp !== '' && (Number.isNaN(xpNum) || xpNum < 0)) {
+      toast.push('XP must be a valid positive number', 'error');
+      return;
+    }
+    try {
+      await api.post('/gamification/challenges', { ...form, title: form.title.trim() });
+      toast.push('Challenge created');
+      setOpen(false);
+      setForm({ title: '', categoryId: '', description: '', xp: 50, difficulty: 'MEDIUM', evidenceRequired: true, deadline: '', status: 'ACTIVE' });
+      load();
+    }
+    catch (err) { toast.push(apiErrorMessage(err, 'Unable to create challenge'), 'error'); }
   };
 
   const join = async (id) => {
@@ -107,7 +125,7 @@ function Challenges({ user, isAdmin, isReviewer }) {
                 <tr key={c.id}>
                   <td className="font-medium">{c.title}</td>
                   <td>{c.category?.name || '—'}</td>
-                  <td className="font-semibold text-amber-700">{c.xp}</td>
+                  <td className="font-semibold text-amber-400">{c.xp}</td>
                   <td>{c.difficulty}</td>
                   <td><StatusPill status={c.status} /></td>
                   <td>{c._count?.participations ?? 0}</td>
@@ -115,7 +133,7 @@ function Challenges({ user, isAdmin, isReviewer }) {
                     {isReviewer && (
                       <button
                         onClick={() => setTrackingChallenge(c)}
-                        className="text-forest-700 text-xs font-semibold hover:underline"
+                        className="text-mint-400 text-xs font-semibold hover:underline"
                       >
                         Participants
                       </button>
@@ -123,18 +141,18 @@ function Challenges({ user, isAdmin, isReviewer }) {
                     {!isReviewer && c.status === 'ACTIVE' && (
                       <>
                         {!myPart ? (
-                          <button onClick={() => join(c.id)} className="text-forest-700 text-xs font-semibold hover:underline">Join</button>
+                          <button onClick={() => join(c.id)} className="text-mint-400 text-xs font-semibold hover:underline">Join</button>
                         ) : (
                           <div className="flex flex-col gap-1 items-start">
-                            <span className="text-xs text-forest-700/60 font-semibold">Joined</span>
+                            <span className="text-xs text-mint-400/60 font-semibold">Joined</span>
                             {myPart.approvalStatus === 'APPROVED' ? (
-                              <span className="text-xs text-forest-700 font-bold">✓ Approved</span>
+                              <span className="text-xs text-mint-400 font-bold">✓ Approved</span>
                             ) : myPart.approvalStatus === 'PENDING' ? (
                               c.evidenceRequired ? (
                                 myPart.proofUrl ? (
-                                  <span className="text-xs text-amber-700 font-semibold">Pending Review</span>
+                                  <span className="text-xs text-amber-400 font-semibold">Pending Review</span>
                                 ) : (
-                                  <label className="text-xs text-forest-500 font-semibold cursor-pointer hover:underline">
+                                  <label className="text-xs text-mint-400 font-semibold cursor-pointer hover:underline">
                                     Submit Proof
                                     <input
                                       type="file"
@@ -147,11 +165,11 @@ function Challenges({ user, isAdmin, isReviewer }) {
                                 )
                               ) : (
                                 myPart.progress === 100 ? (
-                                  <span className="text-xs text-amber-700 font-semibold">Pending Review</span>
+                                  <span className="text-xs text-amber-400 font-semibold">Pending Review</span>
                                 ) : (
                                   <button
                                     onClick={() => completeChallenge(myPart.id)}
-                                    className="text-xs text-forest-700 font-semibold hover:underline"
+                                    className="text-xs text-mint-400 font-semibold hover:underline"
                                   >
                                     Mark Complete
                                   </button>
@@ -161,7 +179,7 @@ function Challenges({ user, isAdmin, isReviewer }) {
                               <div className="flex items-center gap-1.5">
                                 <span className="text-xs text-clay font-semibold">Rejected</span>
                                 {c.evidenceRequired && (
-                                  <label className="text-xs text-forest-500 font-semibold cursor-pointer hover:underline">
+                                  <label className="text-xs text-mint-400 font-semibold cursor-pointer hover:underline">
                                     Re-submit
                                     <input
                                       type="file"
@@ -178,9 +196,9 @@ function Challenges({ user, isAdmin, isReviewer }) {
                         )}
                       </>
                     )}
-                    {isAdmin && c.status === 'DRAFT' && <button onClick={() => setStatus(c.id, 'ACTIVE')} className="text-forest-700 text-xs font-semibold hover:underline">Activate</button>}
-                    {isAdmin && c.status === 'ACTIVE' && <button onClick={() => setStatus(c.id, 'UNDER_REVIEW')} className="text-amber-700 text-xs font-semibold hover:underline">Close for Review</button>}
-                    {isAdmin && c.status === 'UNDER_REVIEW' && <button onClick={() => setStatus(c.id, 'COMPLETED')} className="text-forest-700 text-xs font-semibold hover:underline">Complete</button>}
+                    {isAdmin && c.status === 'DRAFT' && <button onClick={() => setStatus(c.id, 'ACTIVE')} className="text-mint-400 text-xs font-semibold hover:underline">Activate</button>}
+                    {isAdmin && c.status === 'ACTIVE' && <button onClick={() => setStatus(c.id, 'UNDER_REVIEW')} className="text-amber-400 text-xs font-semibold hover:underline">Close for Review</button>}
+                    {isAdmin && c.status === 'UNDER_REVIEW' && <button onClick={() => setStatus(c.id, 'COMPLETED')} className="text-mint-400 text-xs font-semibold hover:underline">Complete</button>}
                   </td>
                 </tr>
               );
@@ -324,7 +342,7 @@ function ChallengeTrackingModal({ open, onClose, challenge }) {
                       <td>{p.employee?.department?.name || '—'}</td>
                       <td>
                         {p.proofUrl ? (
-                          <a href={p.proofUrl} target="_blank" rel="noreferrer" className="text-forest-700 underline font-semibold">View Proof</a>
+                          <a href={p.proofUrl} target="_blank" rel="noreferrer" className="text-mint-400 underline font-semibold">View Proof</a>
                         ) : (
                           <span className="text-ink/30">None</span>
                         )}
@@ -335,7 +353,7 @@ function ChallengeTrackingModal({ open, onClose, challenge }) {
                           <>
                             <button
                               onClick={() => review(p.id, 'APPROVED')}
-                              className="text-forest-700 font-semibold hover:underline"
+                              className="text-mint-400 font-semibold hover:underline"
                               disabled={challenge.evidenceRequired && !p.proofUrl}
                               title={challenge.evidenceRequired && !p.proofUrl ? "Proof required" : ""}
                             >
@@ -376,9 +394,9 @@ function Leaderboard() {
     <div className="card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display font-semibold">Leaderboard</h3>
-        <div className="flex gap-1 bg-forest-50 rounded-lg p-1">
+        <div className="flex gap-1 bg-mint-400/10 rounded-lg p-1">
           {['employee', 'department'].map((s) => (
-            <button key={s} onClick={() => setScope(s)} className={`px-3 py-1.5 rounded-md text-xs font-semibold capitalize ${scope === s ? 'bg-white shadow-sm text-forest-700' : 'text-ink/50'}`}>
+            <button key={s} onClick={() => setScope(s)} className={`px-3 py-1.5 rounded-md text-xs font-semibold capitalize ${scope === s ? 'bg-mint-400/15 border border-mint-400/25 text-mint-400' : 'text-ink/50'}`}>
               {s}
             </button>
           ))}
@@ -387,13 +405,13 @@ function Leaderboard() {
       {loading ? <Loader /> : rows.length === 0 ? <EmptyState /> : (
         <ul className="flex flex-col gap-2">
           {rows.map((r, i) => (
-            <li key={r.id || r.departmentId} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-forest-50/60">
+            <li key={r.id || r.departmentId} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-mint-400/[0.06]">
               <span className="flex items-center gap-3">
-                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < 3 ? 'bg-amber-400 text-white' : 'bg-forest-50 text-forest-700'}`}>{i + 1}</span>
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < 3 ? 'bg-amber-400 text-white' : 'bg-mint-400/10 text-mint-400'}`}>{i + 1}</span>
                 <span className="font-medium">{scope === 'employee' ? r.name : r.departmentName}</span>
                 {scope === 'employee' && <span className="text-ink/40 text-xs">{r.department?.name}</span>}
               </span>
-              <span className="font-semibold text-amber-700">{scope === 'employee' ? r.xp : r.totalXp} XP</span>
+              <span className="font-semibold text-amber-400">{scope === 'employee' ? r.xp : r.totalXp} XP</span>
             </li>
           ))}
         </ul>
@@ -439,7 +457,7 @@ function Badges({ isAdmin }) {
               <div className="text-3xl mb-1">{b.icon}</div>
               <p className="font-semibold text-sm">{b.name}</p>
               <p className="text-xs text-ink/40 mt-1">{b.description}</p>
-              <p className="text-[10px] text-forest-700 mt-2 font-semibold uppercase tracking-wide">
+              <p className="text-[10px] text-mint-400 mt-2 font-semibold uppercase tracking-wide">
                 {b.unlockRuleType === 'XP_THRESHOLD' ? `${b.unlockRuleValue} XP` : `${b.unlockRuleValue} challenges`}
               </p>
             </div>
@@ -511,7 +529,7 @@ function Rewards({ isAdmin, isEmployee }) {
               <p className="font-semibold text-sm">{r.name}</p>
               <p className="text-xs text-ink/40 mt-1 mb-3">{r.description}</p>
               <div className="flex items-center justify-between">
-                <span className="pill bg-amber-400/15 text-amber-700">{r.pointsRequired} pts</span>
+                <span className="pill bg-amber-400/15 text-amber-400">{r.pointsRequired} pts</span>
                 <span className="text-xs text-ink/40">{r.stock} in stock</span>
               </div>
               {isEmployee && (

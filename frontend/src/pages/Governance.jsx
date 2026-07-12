@@ -72,7 +72,7 @@ function Policies({ isAdmin }) {
                 <td>{p.category}</td>
                 <td>{p.version}</td>
                 <td><StatusPill status={p.status} /></td>
-                {isAdmin && <td>{p.status !== 'PUBLISHED' && <button onClick={() => publish(p.id)} className="text-forest-700 text-xs font-semibold hover:underline">Publish</button>}</td>}
+                {isAdmin && <td>{p.status !== 'PUBLISHED' && <button onClick={() => publish(p.id)} className="text-mint-400 text-xs font-semibold hover:underline">Publish</button>}</td>}
               </tr>
             ))}
           </tbody>
@@ -143,7 +143,7 @@ function Acknowledgements({ user, isAdmin }) {
                 <td><StatusPill status={a.status} /></td>
                 <td>{a.acknowledgedDate ? new Date(a.acknowledgedDate).toLocaleDateString() : '—'}</td>
                 {!isAdmin && a.employeeId === user.id && (
-                  <td>{a.status === 'PENDING' && <button onClick={() => acknowledge(a.id)} className="text-forest-700 text-xs font-semibold hover:underline">Acknowledge</button>}</td>
+                  <td>{a.status === 'PENDING' && <button onClick={() => acknowledge(a.id)} className="text-mint-400 text-xs font-semibold hover:underline">Acknowledge</button>}</td>
                 )}
               </tr>
             ))}
@@ -264,7 +264,7 @@ function ComplianceIssues({ isReviewer }) {
                 <td>{i.owner?.name || 'Unassigned'}</td>
                 <td>{new Date(i.dueDate).toLocaleDateString()}</td>
                 <td><StatusPill status={i.status} /></td>
-                {isReviewer && <td>{i.status !== 'RESOLVED' && <button onClick={() => resolve(i.id)} className="text-forest-700 text-xs font-semibold hover:underline">Mark Resolved</button>}</td>}
+                {isReviewer && <td>{i.status !== 'RESOLVED' && <button onClick={() => resolve(i.id)} className="text-mint-400 text-xs font-semibold hover:underline">Mark Resolved</button>}</td>}
               </tr>
             ))}
           </tbody>

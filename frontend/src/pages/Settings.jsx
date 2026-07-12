@@ -55,7 +55,7 @@ export default function Settings() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="card">
           <h3 className="font-display font-semibold mb-1">ESG Pillar Weightings</h3>
-          <p className="text-xs text-ink/40 mb-4">Must sum to 1.0 (100%). Current total: <span className={sum === '1.00' ? 'text-forest-700 font-semibold' : 'text-clay font-semibold'}>{sum}</span></p>
+          <p className="text-xs text-ink/40 mb-4">Must sum to 1.0 (100%). Current total: <span className={sum === '1.00' ? 'text-mint-400 font-semibold' : 'text-clay font-semibold'}>{sum}</span></p>
           <form onSubmit={saveWeights} className="flex flex-col gap-3">
             {['environmental', 'social', 'governance'].map((key) => (
               <div key={key}>
@@ -63,7 +63,7 @@ export default function Settings() {
                 <input
                   type="range" min="0" max="1" step="0.05" value={weights[key]}
                   onChange={(e) => setWeights({ ...weights, [key]: Number(e.target.value) })}
-                  className="w-full accent-forest-500"
+                  className="w-full accent-mint-400"
                 />
               </div>
             ))}
@@ -99,7 +99,7 @@ function ToggleRow({ label, sub, checked, onChange }) {
       </span>
       <span className="relative inline-flex shrink-0">
         <input type="checkbox" className="sr-only peer" checked={checked} onChange={onChange} />
-        <span className="w-10 h-6 bg-line rounded-full peer-checked:bg-forest-500 transition-colors" />
+        <span className="w-10 h-6 bg-line rounded-full peer-checked:bg-mint-400 transition-colors" />
         <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
       </span>
     </label>

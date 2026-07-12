@@ -37,14 +37,14 @@ export default function Notifications() {
         {rows.length === 0 ? <EmptyState title="No notifications" sub="You're all caught up." /> : (
           <ul className="flex flex-col divide-y divide-line">
             {rows.map((n) => (
-              <li key={n.id} className={`flex items-start gap-3 py-3 ${!n.isRead ? 'bg-forest-50/40 -mx-5 px-5' : ''}`}>
+              <li key={n.id} className={`flex items-start gap-3 py-3 ${!n.isRead ? 'bg-mint-400/[0.06] -mx-5 px-5' : ''}`}>
                 <span className="text-xl">{ICONS[n.eventType] || '🔔'}</span>
                 <div className="flex-1">
                   <p className="text-sm font-semibold">{n.title}</p>
                   <p className="text-xs text-ink/50 mt-0.5">{n.message}</p>
                   <p className="text-[10px] text-ink/30 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
                 </div>
-                {!n.isRead && <button onClick={() => markRead(n.id)} className="text-xs font-semibold text-forest-700 hover:underline shrink-0">Mark read</button>}
+                {!n.isRead && <button onClick={() => markRead(n.id)} className="text-xs font-semibold text-mint-400 hover:underline shrink-0">Mark read</button>}
               </li>
             ))}
           </ul>

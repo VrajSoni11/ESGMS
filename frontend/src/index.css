@@ -4,48 +4,76 @@
 
 * { box-sizing: border-box; }
 
-body { -webkit-font-smoothing: antialiased; }
+html { color-scheme: dark; }
 
-h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; }
+body {
+  -webkit-font-smoothing: antialiased;
+  background-color: #1B1C21;
+  background-image:
+    radial-gradient(60% 50% at 15% 10%, rgba(184,247,228,0.14), transparent 60%),
+    radial-gradient(50% 45% at 90% 15%, rgba(127,224,190,0.10), transparent 55%),
+    radial-gradient(70% 60% at 50% 100%, rgba(31,82,69,0.25), transparent 60%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 { font-family: 'Fraunces', serif; letter-spacing: -0.01em; }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: #D3E3D6; border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(184,247,228,0.18); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(184,247,228,0.3); }
 ::-webkit-scrollbar-track { background: transparent; }
 
 .focus-ring:focus-visible {
-  outline: 2px solid #2F6844;
+  outline: 2px solid #B8F7E4;
   outline-offset: 2px;
 }
 
 @layer components {
-  .card {
-    @apply bg-panel rounded-2xl shadow-card border border-line p-5;
+  /* Core glass surface: translucent graphite, blurred, hairline mint border */
+  .glass {
+    @apply bg-graphite-800/55 backdrop-blur-xl border border-mint-400/[0.12] shadow-glass;
   }
+  .card {
+    @apply glass rounded-2xl p-5;
+  }
+  .glass-strong {
+    @apply bg-graphite-800/75 backdrop-blur-2xl border border-mint-400/[0.16] shadow-glass;
+  }
+
   .btn-primary {
-    @apply bg-forest-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-forest-700 transition-colors focus-ring disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-mint-400 text-graphite-900 px-4 py-2 rounded-xl text-sm font-semibold
+      hover:bg-mint-300 hover:shadow-glow transition-all duration-200 focus-ring
+      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none;
   }
   .btn-secondary {
-    @apply bg-white text-forest-700 border border-forest-300 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-forest-50 transition-colors focus-ring;
+    @apply bg-white/[0.04] text-mint-400 border border-mint-400/25 px-4 py-2 rounded-xl text-sm font-semibold
+      hover:bg-mint-400/10 hover:border-mint-400/40 transition-colors focus-ring;
   }
   .btn-danger {
-    @apply bg-clay text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity focus-ring;
+    @apply bg-clay/15 text-clay border border-clay/30 px-4 py-2 rounded-xl text-sm font-semibold
+      hover:bg-clay/25 transition-colors focus-ring;
   }
+
   .input {
-    @apply w-full border border-line rounded-lg px-3 py-2 text-sm bg-white focus-ring focus:border-forest-500;
+    @apply w-full border border-mint-400/15 rounded-xl px-3 py-2 text-sm bg-graphite-900/60
+      text-ink placeholder:text-graphite-300 focus-ring focus:border-mint-400/50 transition-colors;
   }
   .label {
-    @apply text-xs font-semibold uppercase tracking-wide text-forest-700/70 mb-1 block;
+    @apply text-xs font-semibold uppercase tracking-wide text-mint-400/70 mb-1 block;
   }
+
   .table-shell {
     @apply w-full text-sm border-collapse;
   }
   .table-shell th {
-    @apply text-left text-xs uppercase tracking-wide text-forest-700/60 font-semibold py-2 px-3 border-b border-line;
+    @apply text-left text-xs uppercase tracking-wide text-mint-400/55 font-semibold py-2 px-3 border-b border-mint-400/10;
   }
   .table-shell td {
-    @apply py-2.5 px-3 border-b border-line/70 align-middle;
+    @apply py-2.5 px-3 border-b border-mint-400/[0.06] align-middle text-ink/90;
   }
-  .table-shell tr:hover td { @apply bg-forest-50/60; }
+  .table-shell tr:hover td { @apply bg-mint-400/[0.04]; }
+
   .pill {
     @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
   }
